@@ -1,24 +1,50 @@
 # -*- mode: ruby -*-
 # vi: set ft=ruby :
 
-Vagrant::Config.run do |config|
+# Vagrantfile API/syntax version. Don't touch unless you know what you're doing!
+VAGRANTFILE_API_VERSION = "2"
+
+Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
   config.vm.box = "precise64"
   config.vm.box_url = "http://files.vagrantup.com/precise64.box"
-  config.vm.customize ["modifyvm", :id, "--natdnshostresolver1", "on"]
-  config.vm.customize ["modifyvm", :id, "--memory", 256]
   config.vm.host_name = "JavaPackageMaker"
+
+  config.vm.provider :virtualbox do |vb|
+    vb.customize ["modifyvm", :id, "--natdnshostresolver1", "on"]
+    vb.customize ["modifyvm", :id, "--memory", 256]
+  end
 
   config.vm.provision :chef_solo do |chef|
     chef.cookbooks_path = [ "cookbooks" ]
-    # chef.add_recipe "apt"
     chef.add_recipe "oraclejavapackager"
+
+    # JDK & JRE are both supported
     # Java download location:
     # http://www.oracle.com/technetwork/java/javase/downloads/index.html
     chef.json = {
-      'java' => {
-        'target' => "1.7.0-17",
-        'raw' => "jdk-7u17-linux-x64.tar.gz"
-      },
+	  'java' => {
+	    'name' => 'oracle',
+	    'edition' => {
+			'jdk7' => {
+				'name' => 'Oracle JDK7',
+				'version' => "1.7.0-45",
+				'jdk' => true,
+				'archs' => {
+					'x86_64' => "http://download.oracle.com/otn-pub/java/jdk/7u45-b18/jdk-7u45-linux-x64.tar.gz",
+					'i586' => "http://download.oracle.com/otn-pub/java/jdk/7u45-b18/jdk-7u45-linux-i586.tar.gz"
+				}
+			},
+			'jre7' => {
+				'name' => 'Oracle JRE7',
+				'version' => "1.7.0-45",
+				'jdk' => false,
+				'archs' => {
+					'x86_64' => "http://download.oracle.com/otn-pub/java/jdk/7u45-b18/server-jre-7u45-linux-x64.tar.gz",
+					'i586' => "http://download.oracle.com/otn-pub/java/jdk/7u45-b18/jre-7u45-linux-i586.tar.gz"
+				}
+			}
+		}
+	  },
       'vendorname' => "your name /company here",
       'maintainer' => "your name / email here"
     }
